@@ -198,3 +198,32 @@ describe('Store actions', () => {
     expect(filters.type).toBe('expense')
   })
 })
+
+// ─── Property 5: Role-based UI visibility ────────────────────────────────────
+// Feature: finance-dashboard-ui, Property 5: add/edit controls visible iff role is admin
+
+describe('Property 5: Role-based UI visibility', () => {
+  beforeEach(() => resetStore())
+
+  it('add and edit controls are visible iff role is admin', () => {
+    fc.assert(
+      fc.property(fc.constantFrom('admin', 'viewer') as fc.Arbitrary<Role>, (role) => {
+        resetStore([], role)
+        const { role: storedRole } = useStore.getState()
+
+        const isAdmin = storedRole === 'admin'
+        const showAddButton = isAdmin
+        const showEditButton = isAdmin
+
+        if (role === 'admin') {
+          expect(showAddButton).toBe(true)
+          expect(showEditButton).toBe(true)
+        } else {
+          expect(showAddButton).toBe(false)
+          expect(showEditButton).toBe(false)
+        }
+      }),
+      { numRuns: 100 },
+    )
+  })
+})
