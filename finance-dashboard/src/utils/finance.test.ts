@@ -25,16 +25,15 @@ const arbCategory = fc.constantFrom(...categories)
 const arbType = fc.constantFrom(...transactionTypes)
 
 /** Generates a valid ISO date string between 2020-01-01 and 2025-12-31 */
-const arbDate = fc.date({
-  min: new Date('2020-01-01'),
-  max: new Date('2025-12-31'),
-}).map((d) => d.toISOString().slice(0, 10))
+const arbDate = fc
+  .integer({ min: new Date('2020-01-01').getTime(), max: new Date('2025-12-31').getTime() })
+  .map((ms) => new Date(ms).toISOString().slice(0, 10))
 
 const arbTransaction: fc.Arbitrary<Transaction> = fc.record({
   id: fc.uuid(),
   date: arbDate,
   description: fc.string({ minLength: 1, maxLength: 50 }),
-  amount: fc.float({ min: Math.fround(0.01), max: Math.fround(100000), noNaN: true }),
+  amount: fc.integer({ min: 1, max: 1000000 }).map((n) => n / 100), // cents → dollars
   type: arbType,
   category: arbCategory,
 })
@@ -162,7 +161,7 @@ describe('Property 6: Highest spending category consistency', () => {
             id: fc.uuid(),
             date: arbDate,
             description: fc.string({ minLength: 1 }),
-            amount: fc.float({ min: Math.fround(0.01), max: Math.fround(10000), noNaN: true }),
+            amount: fc.integer({ min: 1, max: 1000000 }).map((n) => n / 100),
             type: fc.constant('expense' as const),
             category: arbCategory,
           }),
@@ -222,7 +221,7 @@ describe('Property 8: Average monthly expense computation', () => {
             id: fc.uuid(),
             date: arbDate,
             description: fc.string({ minLength: 1 }),
-            amount: fc.float({ min: Math.fround(0.01), max: Math.fround(10000), noNaN: true }),
+            amount: fc.integer({ min: 1, max: 1000000 }).map((n) => n / 100),
             type: fc.constant('expense' as const),
             category: arbCategory,
           }),
