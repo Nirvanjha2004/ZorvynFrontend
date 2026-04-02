@@ -16,7 +16,9 @@ function CustomTooltip({ active, payload, label }: any) {
         <div key={p.dataKey} className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
           <span className="text-gray-500 dark:text-gray-400 capitalize">{p.name}:</span>
-          <span className="font-semibold text-gray-800 dark:text-gray-200">${Number(p.value).toLocaleString()}</span>
+          <span className="font-semibold text-gray-800 dark:text-gray-200">
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(Number(p.value))}
+          </span>
         </div>
       ))}
     </div>

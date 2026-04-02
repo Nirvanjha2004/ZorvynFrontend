@@ -43,16 +43,17 @@ export interface AppState {
   darkMode: boolean
   loading: boolean
   viewMode: 'flat' | 'grouped'
-  addTransaction: (t: Omit<Transaction, 'id'>) => void
-  updateTransaction: (id: string, t: Partial<Omit<Transaction, 'id'>>) => void
-  deleteTransaction: (id: string) => void
+  // Public actions
+  addTransaction: (t: Omit<Transaction, 'id'> & { id?: string }) => Promise<void>
+  updateTransaction: (id: string, t: Partial<Omit<Transaction, 'id'>>) => Promise<void>
+  deleteTransaction: (id: string) => Promise<void>
   setRole: (role: Role) => void
   setFilters: (filters: Partial<FilterState>) => void
   setActivePage: (page: ActivePage) => void
   toggleDarkMode: () => void
-  setTransactions: (transactions: Transaction[]) => void
-  setLoading: (loading: boolean) => void
   setViewMode: (mode: 'flat' | 'grouped') => void
+  // Internal bootstrap — called only from App.tsx on first load
+  _bootstrap: () => Promise<void>
 }
 
 export interface MonthlyDataPoint {

@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
+
 interface InsightCardProps {
-  icon: string
+  icon: ReactNode
   label: string
   value: string
   subtext?: string
@@ -16,7 +18,7 @@ const accentMap = {
 export function InsightCard({ icon, label, value, subtext, accent = 'indigo' }: InsightCardProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800/60 p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl mb-4 ${accentMap[accent]}`}>
+      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-4 ${accentMap[accent]}`}>
         {icon}
       </div>
       <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{label}</p>

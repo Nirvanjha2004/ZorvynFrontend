@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { v4 as uuidv4 } from 'uuid'
+import { mockApi } from '../api/mockApi'
 import type { AppState, Transaction, Role, FilterState, ActivePage } from '../types'
 
 const defaultFilters: FilterState = {
@@ -14,7 +14,7 @@ const defaultFilters: FilterState = {
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       transactions: [],
       role: 'admin' as Role,
       filters: defaultFilters,
@@ -23,37 +23,51 @@ export const useStore = create<AppState>()(
       loading: true,
       viewMode: 'flat' as const,
 
-      addTransaction: (t: Omit<Transaction, 'id'>) =>
-        set((state) => ({
-          transactions: [...state.transactions, { ...t, id: uuidv4() }],
-        })),
+      // Bootstrap: fetch from API on first load; skip if persisted data exists
+      _bootstrap: async () => {
+        if (get().transactions.length > 0) {
+          set({ loading: false })
+          return
+        }
+        try {
+          const transactions = await mockApi.fetchTransactions()
+          set({ transactions, loading: false })
+        } catch {
+          set({ loading: false })
+        }
+      },
 
-      updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id'>>) =>
-        set((state) => ({
-          transactions: state.transactions.map((t) =>
-            t.id === id ? { ...t, ...updates } : t,
-          ),
-        })),
+      addTransaction: async (t: Omit<Transaction, 'id'> & { id?: string }) => {
+        const created = t.id
+          ? { ...t, id: t.id } as Transaction  // undo restore — keep original id
+          : await mockApi.createTransaction(t)
+        set((state) => ({ transactions: [...state.transactions, created] }))
+      },
 
-      deleteTransaction: (id: string) =>
+      updateTransaction: async (id: string, updates: Partial<Omit<Transaction, 'id'>>) => {
+        const existing = get().transactions.find((t) => t.id === id)
+        if (!existing) return
+        const updated = await mockApi.updateTransaction(id, updates, existing)
+        set((state) => ({
+          transactions: state.transactions.map((t) => t.id === id ? updated : t),
+        }))
+      },
+
+      deleteTransaction: async (id: string) => {
+        await mockApi.deleteTransaction(id)
         set((state) => ({
           transactions: state.transactions.filter((t) => t.id !== id),
-        })),
+        }))
+      },
 
       setRole: (role: Role) => set({ role }),
 
       setFilters: (filters: Partial<FilterState>) =>
-        set((state) => ({
-          filters: { ...state.filters, ...filters },
-        })),
+        set((state) => ({ filters: { ...state.filters, ...filters } })),
 
       setActivePage: (activePage: ActivePage) => set({ activePage }),
 
       toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
-
-      setTransactions: (transactions: Transaction[]) => set({ transactions }),
-
-      setLoading: (loading: boolean) => set({ loading }),
 
       setViewMode: (viewMode) => set({ viewMode }),
     }),

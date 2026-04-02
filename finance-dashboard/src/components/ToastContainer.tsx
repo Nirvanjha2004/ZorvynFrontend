@@ -14,20 +14,28 @@ export function ToastContainer() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-slide-up border ${
+          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-slide-up border min-w-64 ${
             t.type === 'success'
               ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-100'
               : 'bg-red-50 dark:bg-red-900/30 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300'
           }`}
         >
-          <span className="text-base" aria-hidden="true">
+          <span className="text-base flex-shrink-0" aria-hidden="true">
             {t.type === 'success' ? '✓' : '✕'}
           </span>
-          {t.message}
+          <span className="flex-1">{t.message}</span>
+          {t.onUndo && (
+            <button
+              onClick={() => { t.onUndo?.(); removeToast(t.id) }}
+              className="flex-shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 transition-colors px-1"
+            >
+              Undo
+            </button>
+          )}
           <button
             onClick={() => removeToast(t.id)}
             aria-label="Dismiss"
-            className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           >
             ×
           </button>

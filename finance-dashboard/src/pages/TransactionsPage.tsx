@@ -53,8 +53,23 @@ export function TransactionsPage() {
 
   function handleDelete(id: string) {
     const tx = transactions.find((t) => t.id === id)
+    if (!tx) return
+
+    // Optimistically remove from store
     deleteTransaction(id)
-    toast(`"${tx?.description ?? 'Transaction'}" deleted`, 'success')
+
+    // Show toast with 5-second undo window
+    toast(
+      `"${tx.description}" deleted`,
+      'success',
+      {
+        label: 'Undo',
+        onUndo: () => {
+          // Re-add the deleted transaction with its original id
+          addTransaction({ ...tx })
+        },
+      },
+    )
   }
 
   function handleSubmit(data: Omit<Transaction, 'id'>) {

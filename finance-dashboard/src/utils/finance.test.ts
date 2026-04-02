@@ -45,6 +45,8 @@ const arbFilterState: fc.Arbitrary<FilterState> = fc.record({
   type: fc.oneof(fc.constant('all' as const), arbType),
   category: fc.oneof(fc.constant('all' as const), arbCategory),
   sortBy: fc.constantFrom(...sortOptions),
+  dateFrom: fc.constant(''),
+  dateTo: fc.constant(''),
 })
 
 // ─── Property 1: Balance invariant ───────────────────────────────────────────
@@ -121,6 +123,8 @@ describe('Property 3: Sort ordering', () => {
             type: 'all',
             category: 'all',
             sortBy,
+            dateFrom: '',
+            dateTo: '',
           }
           const result = applyFilters(transactions, filters)
 
@@ -265,7 +269,7 @@ describe('Edge cases', () => {
     const txs: Transaction[] = [
       { id: '1', date: '2025-01-01', description: 'Test', amount: 100, type: 'income', category: 'Salary' },
     ]
-    const filters: FilterState = { search: '', type: 'all', category: 'all', sortBy: 'date-desc' }
+    const filters: FilterState = { search: '', type: 'all', category: 'all', sortBy: 'date-desc', dateFrom: '', dateTo: '' }
     expect(applyFilters(txs, filters)).toHaveLength(1)
   })
 })

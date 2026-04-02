@@ -56,12 +56,11 @@ const arbFilterState: fc.Arbitrary<FilterState> = fc.record({
 describe('Property 4: Add transaction round trip', () => {
   beforeEach(() => resetStore())
 
-  it('added transaction appears in store with matching fields', () => {
-    fc.assert(
-      fc.property(arbTransactionInput, (input) => {
+  it('added transaction appears in store with matching fields', async () => {
+    await fc.assert(
+      fc.asyncProperty(arbTransactionInput, async (input) => {
         resetStore()
-        const { addTransaction } = useStore.getState()
-        addTransaction(input)
+        await useStore.getState().addTransaction(input)
 
         const { transactions } = useStore.getState()
         const added = transactions.find(
@@ -159,9 +158,9 @@ describe('Property 10: LocalStorage round trip', () => {
 describe('Store actions', () => {
   beforeEach(() => resetStore())
 
-  it('addTransaction increments transaction count', () => {
+  it('addTransaction increments transaction count', async () => {
     const before = useStore.getState().transactions.length
-    useStore.getState().addTransaction({
+    await useStore.getState().addTransaction({
       date: '2025-01-01',
       description: 'Test',
       amount: 100,
@@ -171,11 +170,11 @@ describe('Store actions', () => {
     expect(useStore.getState().transactions).toHaveLength(before + 1)
   })
 
-  it('updateTransaction modifies the correct transaction', () => {
+  it('updateTransaction modifies the correct transaction', async () => {
     resetStore([
       { id: 'abc', date: '2025-01-01', description: 'Old', amount: 50, type: 'expense', category: 'Food' },
     ])
-    useStore.getState().updateTransaction('abc', { description: 'New', amount: 99 })
+    await useStore.getState().updateTransaction('abc', { description: 'New', amount: 99 })
     const updated = useStore.getState().transactions.find((t) => t.id === 'abc')
     expect(updated?.description).toBe('New')
     expect(updated?.amount).toBe(99)

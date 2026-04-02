@@ -8,6 +8,43 @@ import {
 
 const COLORS = ['#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316']
 
+// SVG icons — consistent with sidebar/navbar icon style
+const TrophyIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+    <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+  </svg>
+)
+const TrendUpIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+  </svg>
+)
+const TrendDownIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>
+  </svg>
+)
+const TrendFlatIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+)
+const CalendarIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+const PiggyBankIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2z"/>
+    <path d="M2 9v1a2 2 0 0 0 2 2h1"/><path d="M16 11h0"/>
+  </svg>
+)
+
 function GoToTransactionsButton() {
   const setActivePage = useStore((s) => s.setActivePage)
   return (
@@ -46,7 +83,12 @@ export function InsightsPage() {
   const income      = getTotalIncome(transactions)
   const expenses    = getTotalExpenses(transactions)
   const cats        = getSpendingByCategory(transactions)
-  const savingsRate = income > 0 ? (((income - expenses) / income) * 100).toFixed(1) : '0'
+  const savingsRateNum = income > 0 ? ((income - expenses) / income) * 100 : 0
+  const savingsRate = savingsRateNum.toFixed(1)
+  const isNegativeSavings = savingsRateNum < 0
+  const savingsSubtext = isNegativeSavings
+    ? `Spending ${formatCurrency(expenses - income)} more than earned`
+    : `${formatCurrency(income - expenses)} saved of ${formatCurrency(income)} earned`
 
   const momPct = mom.previous > 0
     ? Math.abs(((mom.current - mom.previous) / mom.previous) * 100).toFixed(1)
@@ -68,32 +110,32 @@ export function InsightsPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <InsightCard
-          icon="🏆"
+          icon={<TrophyIcon />}
           label="Top Spending Category"
           value={topCategory ? topCategory.category : '—'}
           subtext={topCategory ? `${formatCurrency(topCategory.total)} total spent` : undefined}
           accent="amber"
         />
         <InsightCard
-          icon={mom.direction === 'up' ? '📈' : mom.direction === 'down' ? '📉' : '➡️'}
+          icon={mom.direction === 'up' ? <TrendUpIcon /> : mom.direction === 'down' ? <TrendDownIcon /> : <TrendFlatIcon />}
           label="This Month's Expenses"
           value={formatCurrency(mom.current)}
           subtext={momSubtext}
           accent={mom.direction === 'up' ? 'red' : 'emerald'}
         />
         <InsightCard
-          icon="📅"
+          icon={<CalendarIcon />}
           label="Avg Monthly Expense"
           value={formatCurrency(avgMonthly)}
           subtext="across all recorded months"
           accent="indigo"
         />
         <InsightCard
-          icon="💰"
+          icon={<PiggyBankIcon />}
           label="Savings Rate"
-          value={`${savingsRate}%`}
-          subtext={`${formatCurrency(income - expenses)} saved of ${formatCurrency(income)} earned`}
-          accent={parseFloat(savingsRate) >= 20 ? 'emerald' : parseFloat(savingsRate) >= 10 ? 'amber' : 'red'}
+          value={isNegativeSavings ? `−${Math.abs(savingsRateNum).toFixed(1)}%` : `${savingsRate}%`}
+          subtext={savingsSubtext}
+          accent={savingsRateNum >= 20 ? 'emerald' : savingsRateNum >= 10 ? 'amber' : 'red'}
         />
       </div>
 

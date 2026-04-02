@@ -2,23 +2,40 @@ import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 import type { Toast } from '../types'
 
+interface ToastWithUndo extends Toast {
+  undoLabel?: string
+  onUndo?: () => void
+  timeoutId?: ReturnType<typeof setTimeout>
+}
+
 interface ToastStore {
-  toasts: Toast[]
-  addToast: (message: string, type?: Toast['type']) => void
+  toasts: ToastWithUndo[]
+  addToast: (message: string, type?: Toast['type'], undo?: { label: string; onUndo: () => void }) => void
   removeToast: (id: string) => void
 }
 
-export const useToastStore = create<ToastStore>((set) => ({
+export const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
-  addToast: (message, type = 'success') => {
+
+  addToast: (message, type = 'success', undo) => {
     const id = uuidv4()
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }))
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
-    }, 3500)
+    }, undo ? 5000 : 3500)
+
+    set((state) => ({
+      toasts: [
+        ...state.toasts,
+        { id, message, type, undoLabel: undo?.label, onUndo: undo?.onUndo, timeoutId },
+      ],
+    }))
   },
-  removeToast: (id) =>
-    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+
+  removeToast: (id) => {
+    const toast = get().toasts.find((t) => t.id === id)
+    if (toast?.timeoutId) clearTimeout(toast.timeoutId)
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
+  },
 }))
 
 export function useToast() {
