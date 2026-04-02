@@ -29,6 +29,13 @@
 .animate-spin         { animation: spin         0.75s linear infinite; }
 .animate-pulse-soft   { animation: pulse-soft   1.5s ease-in-out infinite; }
 
+/* ── Select dropdown panel ──────────────────────────────────── */
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.animate-dropdown-in { animation: dropdown-in 0.12s ease-out both; }
+
 /* ── Skeleton shimmer ───────────────────────────────────────── */
 @keyframes shimmer {
   from { background-position: -200% 0; }

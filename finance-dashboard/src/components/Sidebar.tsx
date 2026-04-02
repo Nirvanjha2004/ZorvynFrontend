@@ -1,5 +1,12 @@
 import { useStore } from '../store/useStore'
+import { Select } from './Select'
 import type { ActivePage } from '../types'
+import type { SelectOption } from './Select'
+
+const roleOptions: SelectOption[] = [
+  { value: 'admin',  label: 'Admin',  icon: '🔑', description: 'Can add & edit' },
+  { value: 'viewer', label: 'Viewer', icon: '👁️', description: 'Read only' },
+]
 
 /* ── Inline SVG icons (no extra dep) ── */
 const Icons = {
@@ -98,22 +105,12 @@ export function Sidebar() {
       <div className="px-3 py-4 border-t border-gray-100 dark:border-gray-800/60 flex flex-col gap-3">
         {/* Role selector */}
         <div className="px-3">
-          <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-1.5">Role</p>
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
-            {(['admin', 'viewer'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setRole(r)}
-                className={`flex-1 py-1.5 font-medium capitalize transition-colors ${
-                  role === r
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+          <Select
+            label="Role"
+            value={role}
+            onChange={(v) => setRole(v as 'admin' | 'viewer')}
+            options={roleOptions}
+          />
         </div>
 
         {/* Dark mode */}
