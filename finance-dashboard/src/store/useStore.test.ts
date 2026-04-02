@@ -10,8 +10,11 @@ function resetStore(transactions: Transaction[] = [], role: Role = 'admin') {
   useStore.setState({
     transactions,
     role,
-    filters: { search: '', type: 'all', category: 'all', sortBy: 'date-desc' },
+    filters: { search: '', type: 'all', category: 'all', sortBy: 'date-desc', dateFrom: '', dateTo: '' },
     activePage: 'dashboard',
+    darkMode: false,
+    loading: false,
+    viewMode: 'flat',
   })
 }
 
@@ -43,6 +46,8 @@ const arbFilterState: fc.Arbitrary<FilterState> = fc.record({
   type: fc.oneof(fc.constant('all' as const), arbType),
   category: fc.oneof(fc.constant('all' as const), arbCategory),
   sortBy: fc.constantFrom('date-desc', 'date-asc', 'amount-desc', 'amount-asc') as fc.Arbitrary<FilterState['sortBy']>,
+  dateFrom: fc.constant(''),
+  dateTo: fc.constant(''),
 })
 
 // ─── Property 4: Add transaction round trip ───────────────────────────────────

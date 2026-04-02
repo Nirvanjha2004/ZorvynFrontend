@@ -137,6 +137,14 @@ export function applyFilters(
     )
   }
 
+  // Date range filter
+  if (filters.dateFrom) {
+    result = result.filter((t) => t.date >= filters.dateFrom)
+  }
+  if (filters.dateTo) {
+    result = result.filter((t) => t.date <= filters.dateTo)
+  }
+
   // Sort
   switch (filters.sortBy) {
     case 'date-desc':
@@ -172,4 +180,36 @@ export function formatDate(dateStr: string): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+// ─── Grouping ─────────────────────────────────────────────────────────────────
+
+/** Groups transactions by YYYY-MM, sorted descending (newest first). */
+export function groupTransactionsByMonth(
+  transactions: Transaction[],
+): { month: string; transactions: Transaction[] }[] {
+  const map = new Map<string, Transaction[]>()
+  for (const t of transactions) {
+    const month = t.date.slice(0, 7)
+    const group = map.get(month) ?? []
+    group.push(t)
+    map.set(month, group)
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([month, txs]) => ({ month, transactions: txs }))
+}
+
+// ─── Export helpers ───────────────────────────────────────────────────────────
+
+export function exportToCSV(transactions: Transaction[]): string {
+  const header = 'id,date,description,amount,type,category'
+  const rows = transactions.map((t) =>
+    [t.id, t.date, `"${t.description.replace(/"/g, '""')}"`, t.amount, t.type, t.category].join(','),
+  )
+  return [header, ...rows].join('\n')
+}
+
+export function exportToJSON(transactions: Transaction[]): string {
+  return JSON.stringify(transactions, null, 2)
 }

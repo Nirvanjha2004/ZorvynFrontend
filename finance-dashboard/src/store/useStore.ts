@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-import { mockTransactions } from '../data/mockTransactions'
 import type { AppState, Transaction, Role, FilterState, ActivePage } from '../types'
 
 const defaultFilters: FilterState = {
@@ -9,15 +8,20 @@ const defaultFilters: FilterState = {
   type: 'all',
   category: 'all',
   sortBy: 'date-desc',
+  dateFrom: '',
+  dateTo: '',
 }
 
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      transactions: mockTransactions,
+      transactions: [],
       role: 'admin' as Role,
       filters: defaultFilters,
       activePage: 'dashboard' as ActivePage,
+      darkMode: false,
+      loading: true,
+      viewMode: 'flat' as const,
 
       addTransaction: (t: Omit<Transaction, 'id'>) =>
         set((state) => ({
@@ -31,6 +35,11 @@ export const useStore = create<AppState>()(
           ),
         })),
 
+      deleteTransaction: (id: string) =>
+        set((state) => ({
+          transactions: state.transactions.filter((t) => t.id !== id),
+        })),
+
       setRole: (role: Role) => set({ role }),
 
       setFilters: (filters: Partial<FilterState>) =>
@@ -39,13 +48,22 @@ export const useStore = create<AppState>()(
         })),
 
       setActivePage: (activePage: ActivePage) => set({ activePage }),
+
+      toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+
+      setTransactions: (transactions: Transaction[]) => set({ transactions }),
+
+      setLoading: (loading: boolean) => set({ loading }),
+
+      setViewMode: (viewMode) => set({ viewMode }),
     }),
     {
       name: 'finance-dashboard-store',
-      // Only persist transactions and role — filters and activePage reset on reload
       partialize: (state) => ({
         transactions: state.transactions,
         role: state.role,
+        darkMode: state.darkMode,
+        viewMode: state.viewMode,
       }),
     },
   ),

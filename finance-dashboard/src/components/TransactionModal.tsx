@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { Transaction, Category, TransactionType } from '../types'
 import { validateTransaction } from './transactionValidation'
 import type { FormErrors } from './transactionValidation'
@@ -7,6 +8,11 @@ const categories: Category[] = [
   'Salary', 'Food', 'Rent', 'Entertainment', 'Transport',
   'Healthcare', 'Shopping', 'Utilities', 'Other',
 ]
+
+const categoryIcon: Record<string, string> = {
+  Salary: '💼', Food: '🍔', Rent: '🏠', Entertainment: '🎬',
+  Transport: '🚗', Healthcare: '💊', Shopping: '🛍️', Utilities: '⚡', Other: '📦',
+}
 
 interface FormValues {
   date: string
@@ -21,6 +27,9 @@ interface TransactionModalProps {
   onSubmit: (data: Omit<Transaction, 'id'>) => void
   onClose: () => void
 }
+
+const fieldClass = 'w-full text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors'
+const labelClass = 'block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide'
 
 export function TransactionModal({ transaction, onSubmit, onClose }: TransactionModalProps) {
   const isEdit = Boolean(transaction)
@@ -48,10 +57,9 @@ export function TransactionModal({ transaction, onSubmit, onClose }: Transaction
   }, [transaction])
 
   function handleChange(field: keyof FormValues, value: string) {
-    setValues((prev) => ({ ...prev, [field]: value }))
-    if (touched) {
-      setErrors(validateTransaction({ ...values, [field]: value }))
-    }
+    const next = { ...values, [field]: value }
+    setValues(next)
+    if (touched) setErrors(validateTransaction(next))
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -60,7 +68,6 @@ export function TransactionModal({ transaction, onSubmit, onClose }: Transaction
     const errs = validateTransaction(values)
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
-
     onSubmit({
       date: values.date,
       description: values.description.trim(),
@@ -71,117 +78,135 @@ export function TransactionModal({ transaction, onSubmit, onClose }: Transaction
     onClose()
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-[50] flex items-end sm:items-center justify-center bg-black/40 animate-fade-in p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 id="modal-title" className="text-base font-semibold text-gray-800">
-            {isEdit ? 'Edit Transaction' : 'Add Transaction'}
-          </h2>
+      <div className="relative z-[60] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up border border-gray-100 dark:border-gray-700">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800/60">
+          <div>
+            <h2 id="modal-title" className="text-base font-bold text-gray-900 dark:text-white">
+              {isEdit ? 'Edit Transaction' : 'New Transaction'}
+            </h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              {isEdit ? 'Update the transaction details' : 'Fill in the details below'}
+            </p>
+          </div>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-lg leading-none"
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-          {/* Date */}
+        <form onSubmit={handleSubmit} noValidate className="px-6 py-5 flex flex-col gap-4">
+          {/* Type toggle */}
           <div>
-            <label htmlFor="tx-date" className="block text-xs font-medium text-gray-600 mb-1">Date</label>
-            <input
-              id="tx-date"
-              type="date"
-              value={values.date}
-              onChange={(e) => handleChange('date', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            {errors.date && <p className="text-xs text-red-500 mt-1">{errors.date}</p>}
+            <p className={labelClass}>Type</p>
+            <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {(['expense', 'income'] as TransactionType[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => handleChange('type', t)}
+                  className={`flex-1 py-2.5 text-sm font-semibold capitalize transition-colors ${
+                    values.type === t
+                      ? t === 'income'
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-red-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {t === 'income' ? '↑ Income' : '↓ Expense'}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="tx-desc" className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+            <label htmlFor="tx-desc" className={labelClass}>Description</label>
             <input
-              id="tx-desc"
-              type="text"
-              value={values.description}
+              id="tx-desc" type="text" value={values.description}
               onChange={(e) => handleChange('description', e.target.value)}
               placeholder="e.g. Grocery Shopping"
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className={fieldClass}
+              autoFocus
             />
-            {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-xs text-red-500 mt-1.5">{errors.description}</p>}
           </div>
 
-          {/* Amount */}
-          <div>
-            <label htmlFor="tx-amount" className="block text-xs font-medium text-gray-600 mb-1">Amount ($)</label>
-            <input
-              id="tx-amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={values.amount}
-              onChange={(e) => handleChange('amount', e.target.value)}
-              placeholder="0.00"
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-            {errors.amount && <p className="text-xs text-red-500 mt-1">{errors.amount}</p>}
+          {/* Amount + Date row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="tx-amount" className={labelClass}>Amount ($)</label>
+              <input
+                id="tx-amount" type="number" min="0.01" step="0.01"
+                value={values.amount}
+                onChange={(e) => handleChange('amount', e.target.value)}
+                placeholder="0.00"
+                className={fieldClass}
+              />
+              {errors.amount && <p className="text-xs text-red-500 mt-1.5">{errors.amount}</p>}
+            </div>
+            <div>
+              <label htmlFor="tx-date" className={labelClass}>Date</label>
+              <input
+                id="tx-date" type="date" value={values.date}
+                onChange={(e) => handleChange('date', e.target.value)}
+                className={fieldClass}
+              />
+              {errors.date && <p className="text-xs text-red-500 mt-1.5">{errors.date}</p>}
+            </div>
           </div>
 
-          {/* Type */}
+          {/* Category grid */}
           <div>
-            <label htmlFor="tx-type" className="block text-xs font-medium text-gray-600 mb-1">Type</label>
-            <select
-              id="tx-type"
-              value={values.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label htmlFor="tx-category" className="block text-xs font-medium text-gray-600 mb-1">Category</label>
-            <select
-              id="tx-category"
-              value={values.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
+            <p className={labelClass}>Category</p>
+            <div className="grid grid-cols-3 gap-2">
               {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => handleChange('category', c)}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all ${
+                    values.category === c
+                      ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400'
+                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <span>{categoryIcon[c]}</span>
+                  <span className="truncate">{c}</span>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
-          <div className="flex gap-3 justify-end pt-2">
+          {/* Actions */}
+          <div className="flex gap-3 pt-1">
             <button
-              type="button"
-              onClick={onClose}
-              className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="text-sm px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium"
+              className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold transition-colors"
             >
               {isEdit ? 'Save Changes' : 'Add Transaction'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
