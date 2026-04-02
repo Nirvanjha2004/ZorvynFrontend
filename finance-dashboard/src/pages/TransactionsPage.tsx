@@ -160,7 +160,7 @@ export function TransactionsPage() {
                     <span className="text-red-500 dark:text-red-400">−{formatCurrency(exp)}</span>
                   </div>
                 </div>
-                <TransactionList transactions={txs} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} />
+                <TransactionList transactions={txs} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} paginate={false} />
               </div>
             )
           })}
