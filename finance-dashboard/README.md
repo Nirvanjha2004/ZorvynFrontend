@@ -26,6 +26,12 @@ A production-grade personal finance dashboard built with React 18, TypeScript, T
 | Testing | Vitest + fast-check (property-based) |
 | Build | Vite |
 
+## 🐳 Running with Docker
+
+```bash
+docker-compose up --build
+```
+port = 3000
 ## Getting Started
 
 ```bash
